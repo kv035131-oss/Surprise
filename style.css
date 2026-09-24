@@ -1,0 +1,477 @@
+/* CSS Reset & Variables */
+:root {
+  --primary-pink: #ff758f;
+  --secondary-purple: #b5179e;
+  --warm-peach: #ffb5a7;
+  --soft-bg-1: #ffccd5;
+  --soft-bg-2: #e0aaff;
+  --soft-bg-3: #ffb5a7;
+  
+  --yes-green: #2ec4b6;
+  --yes-green-hover: #20a39e;
+  --no-red: #ff4d6d;
+  --no-red-hover: #c9184a;
+  
+  --text-dark: #2b2d42;
+  --text-muted: #6c757d;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(255, 255, 255, 0.6);
+  --shadow-lg: 0 15px 35px rgba(255, 117, 143, 0.25), 0 5px 15px rgba(0, 0, 0, 0.07);
+
+  --font-family: 'Fredoka', 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+  color: var(--text-dark);
+  position: relative;
+  background: linear-gradient(-45deg, #ff758f, #ffb5a7, #c77dff, #ff8fa3);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+/* Background Animated Gradient */
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Background Canvas for Particles / Floating Hearts */
+#canvas-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Music Toggle Button */
+.music-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid rgba(255, 117, 143, 0.4);
+  backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--secondary-purple);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.music-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 6px 16px rgba(181, 23, 158, 0.2);
+}
+
+.music-btn.playing #music-icon {
+  animation: spinMusic 3s linear infinite;
+}
+
+@keyframes spinMusic {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Container & Glassmorphism Card */
+.container {
+  width: 90%;
+  max-width: 520px;
+  margin: 20px auto;
+  z-index: 10;
+  position: relative;
+}
+
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid var(--card-border);
+  border-radius: 28px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.page-active {
+  opacity: 1;
+  transform: scale(1);
+  display: block;
+}
+
+.page-hidden {
+  opacity: 0;
+  transform: scale(0.92);
+  display: none;
+  pointer-events: none;
+}
+
+/* Headings & Text */
+.clickable-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #c9184a;
+  margin-bottom: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease;
+  line-height: 1.25;
+}
+
+.clickable-title:hover {
+  transform: scale(1.02);
+}
+
+.typing-container {
+  min-height: 28px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.subtext {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #7209b7;
+  display: inline;
+}
+
+.cursor {
+  font-weight: 700;
+  color: #7209b7;
+  animation: blink 0.8s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.main-question {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #800f2f;
+  margin: 20px 0 28px 0;
+  line-height: 1.35;
+}
+
+/* Toast for Easter Egg */
+.toast {
+  background: #7209b7;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 8px 16px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgba(114, 9, 183, 0.3);
+  animation: bounceIn 0.4s ease forwards;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes bounceIn {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.9); }
+  70% { transform: translateY(2px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  min-height: 70px;
+  margin: 10px 0;
+  position: relative;
+}
+
+.btn {
+  font-family: var(--font-family);
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 14px 32px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  transition: background-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-yes {
+  background: linear-gradient(135deg, #2ec4b6, #06d6a0);
+  color: #ffffff;
+  z-index: 5;
+  transform-origin: center;
+}
+
+.btn-yes:hover {
+  background: linear-gradient(135deg, #20a39e, #05b386);
+  box-shadow: 0 10px 25px rgba(46, 196, 182, 0.4);
+}
+
+.btn-no {
+  background: linear-gradient(135deg, #ff4d6d, #c9184a);
+  color: #ffffff;
+  z-index: 20;
+  position: relative;
+  white-space: nowrap;
+}
+
+.btn-no.runaway {
+  position: fixed !important;
+  transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  box-shadow: 0 8px 24px rgba(255, 77, 109, 0.35);
+}
+
+.btn-no.shaking {
+  animation: shakePanic 0.25s infinite ease-in-out !important;
+}
+
+@keyframes shakePanic {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-6px, 4px) rotate(-8deg); }
+  40% { transform: translate(6px, -4px) rotate(8deg); }
+  60% { transform: translate(-4px, -2px) rotate(-6deg); }
+  80% { transform: translate(4px, 2px) rotate(6deg); }
+}
+
+/* Sparkle Puff Effect on Dodge */
+.dodge-puff {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99;
+  font-size: 1.4rem;
+  animation: puffAnim 0.45s ease-out forwards;
+}
+
+@keyframes puffAnim {
+  0% { transform: scale(0.5) translate(0, 0); opacity: 1; }
+  50% { transform: scale(1.4) translate(-10px, -15px); opacity: 0.8; }
+  100% { transform: scale(2) translate(15px, -30px); opacity: 0; }
+}
+
+.btn-no.quitting {
+  transition: transform 0.4s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.4s ease !important;
+  transform: scale(0) rotate(180deg) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Dodge & Quit Messages */
+.dodge-msg {
+  min-height: 26px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #b5179e;
+  margin-top: 16px;
+  font-style: italic;
+  transition: opacity 0.3s ease;
+}
+
+.quit-msg {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #38b000;
+  margin-top: 16px;
+  background: #e8f5e9;
+  padding: 10px 16px;
+  border-radius: 16px;
+  border: 1.5px solid #81c784;
+  animation: pulseIn 0.5s ease;
+}
+
+@keyframes pulseIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* PAGE 2: CELEBRATION STYLING */
+.badge-icon {
+  font-size: 3.5rem;
+  margin-bottom: 8px;
+  animation: celebrateBounce 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes celebrateBounce {
+  0% { transform: translateY(0) rotate(-5deg); }
+  100% { transform: translateY(-12px) rotate(5deg); }
+}
+
+.celebration-title {
+  font-size: 2.1rem;
+  color: #7209b7;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.celebration-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+/* Date Card */
+.date-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-shadow: 0 8px 24px rgba(114, 9, 183, 0.12);
+  border: 2px dashed #f72585;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.date-card-header h3 {
+  font-size: 1.2rem;
+  color: #f72585;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.date-details-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.date-details-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+
+.detail-icon {
+  font-size: 1.25rem;
+  width: 28px;
+}
+
+.detail-label {
+  font-weight: 700;
+  color: #3a0ca3;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #4a4e69;
+}
+
+/* Romantic Message Box */
+.romantic-message {
+  background: rgba(255, 204, 213, 0.4);
+  border-left: 4px solid #ff4d6d;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  text-align: left;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: #590d22;
+}
+
+.signature {
+  margin-top: 12px;
+  font-weight: 700;
+  font-style: italic;
+  text-align: right;
+  color: #a4133c;
+}
+
+/* Action Container */
+.action-container {
+  margin-bottom: 24px;
+}
+
+.btn-calendar {
+  background: linear-gradient(135deg, #7209b7, #4361ee);
+  color: #fff;
+  width: 100%;
+  display: inline-block;
+  font-size: 1.1rem;
+  padding: 14px 20px;
+}
+
+.btn-calendar:hover {
+  background: linear-gradient(135deg, #560bad, #3f37c9);
+  box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Footer */
+.footer {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 16px;
+  margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .card {
+    padding: 24px 18px;
+    border-radius: 22px;
+  }
+  .clickable-title {
+    font-size: 1.7rem;
+  }
+  .main-question {
+    font-size: 1.25rem;
+  }
+  .btn {
+    font-size: 1.1rem;
+    padding: 12px 24px;
+  }
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none;
+    background: #ffccd5;
+  }
+  .badge-icon, .btn-no.runaway, .music-btn.playing #music-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+}
