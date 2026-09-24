@@ -112,11 +112,113 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 3. ENHANCED RUNAWAY NO BUTTON LOGIC
+// 3. 6-LEVEL ESCALATING RUNAWAY NO BUTTON GAME
 // ==========================================
 
 let lastNoPos = null;
-let chaosTimer = null;
+let lastMsgIndexPerLevel = {};
+let currentLevel = 1;
+let proximityThreshold = 100; // 100px for Level 1, 160px for Level 2+
+let fakeDecoys = [];
+
+// Level Titles & Messages
+const LEVEL_TITLES = {
+  1: "Level 1: Warm-up 🌸",
+  2: "Level 2: Getting Serious 😏",
+  3: "Level 3: Decoys 😜",
+  4: "Level 4: Mind Games 🧠✨",
+  5: "Level 5: Final Boss 😈🔥",
+  6: "Level 6: Surrender 🏳️💖"
+};
+
+const LEVEL_MESSAGES = {
+  1: [
+    "Nice try 😏",
+    "Warm-up round! 🏃‍♂️",
+    "No button is stretching... 🧘",
+    "Getting warmed up! 🔥",
+    "Fast reflexes, but nope! ⚡"
+  ],
+  2: [
+    "The No button got faster! 🏎️",
+    "Did you feel that shake? 🫨",
+    "Speed 100x activated! ⚡",
+    "You're persistent! 💨",
+    "Still dodging! 🎯",
+    "Nice try! Speeding up! 🚀"
+  ],
+  3: [
+    "Double trouble! Which one is real? 👯",
+    "Decoy deployed! 🎭",
+    "Oops, wrong No! 😜",
+    "Shadow clone jutsu! 🥷",
+    "Triplets?! 😱"
+  ],
+  4: [
+    "Mind games engaged! 🧠",
+    "Where did it go?! 🕵️‍♂️",
+    "Illusion 100! 🌌",
+    "Swapped! Fooled ya! 🔄",
+    "Quantum teleportation! ⚛️"
+  ],
+  5: [
+    "Boss level! 😈 You're so close!",
+    "Energy dropping fast! ⚡",
+    "The No button is losing strength! 🥵",
+    "Almost out of fuel! ⛽",
+    "Final stretch! Keep going! 🏁"
+  ]
+};
+
+// DOM Level HUD Elements
+const dodgeCountText = document.getElementById("dodge-count-text");
+const levelBadge = document.getElementById("level-badge");
+const levelUpToast = document.getElementById("level-up-toast");
+const energyBarContainer = document.getElementById("energy-bar-container");
+const energyBarFill = document.getElementById("energy-bar-fill");
+const decoyContainer = document.getElementById("decoy-container");
+const questionCard = document.querySelector(".card");
+
+/**
+ * Updates top HUD counter and badge.
+ */
+function updateHUD() {
+  if (dodgeCountText) dodgeCountText.textContent = `Dodges: ${dodgeCount} 😏`;
+  if (levelBadge) levelBadge.textContent = LEVEL_TITLES[currentLevel] || `Level ${currentLevel}`;
+}
+
+/**
+ * Shows a pop-up banner when advancing to a new level.
+ */
+function showLevelUpBanner(levelNum) {
+  if (!levelUpToast) return;
+  const titleText = LEVEL_TITLES[levelNum] || `Level ${levelNum}`;
+  levelUpToast.textContent = `✨ ${titleText} ✨`;
+  levelUpToast.classList.remove("hidden");
+  
+  // Confetti pop for level up
+  spawnPuffEffect(window.innerWidth / 2 - 20, 100);
+
+  setTimeout(() => {
+    levelUpToast.classList.add("hidden");
+  }, 1600);
+}
+
+/**
+ * Retrieves a non-repeating funny message for the current level.
+ */
+function getRandomLevelMessage(levelNum) {
+  const pool = LEVEL_MESSAGES[levelNum] || LEVEL_MESSAGES[1];
+  let lastIdx = lastMsgIndexPerLevel[levelNum] ?? -1;
+  let newIdx = Math.floor(Math.random() * pool.length);
+
+  // Avoid back-to-back repeats
+  if (pool.length > 1 && newIdx === lastIdx) {
+    newIdx = (newIdx + 1) % pool.length;
+  }
+  lastMsgIndexPerLevel[levelNum] = newIdx;
+  return pool[newIdx];
+}
 
 /**
  * Calculates a safe random position for No button inside viewport:
@@ -125,19 +227,19 @@ let chaosTimer = null;
  * 3. At least 150px jump distance from previous spot.
  * 4. Falls back to a safe corner if 20 random retries fail.
  */
-function getSafeRandomPosition() {
+function getSafeRandomPosition(elem = noBtn) {
   const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
   const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   
-  const noRect = noBtn.getBoundingClientRect();
+  const elemRect = elem.getBoundingClientRect();
   const yesRect = yesBtn.getBoundingClientRect();
   const questionElem = document.querySelector(".main-question");
   const questionRect = questionElem ? questionElem.getBoundingClientRect() : null;
 
-  const bw = noRect.width || 110;
-  const bh = noRect.height || 48;
+  const bw = elemRect.width || 100;
+  const bh = elemRect.height || 45;
 
-  const margin = 16; // Mandatory 16px viewport edge margin
+  const margin = 16;
   const minX = margin;
   const maxX = Math.max(minX, vw - bw - margin);
   const minY = margin;
@@ -146,8 +248,8 @@ function getSafeRandomPosition() {
   const prevX = lastNoPos ? lastNoPos.x : (vw / 2);
   const prevY = lastNoPos ? lastNoPos.y : (vh / 2);
 
-  const yesPadding = 35; // Avoid Yes button margin
-  const questionPadding = 20; // Avoid Question text margin
+  const yesPadding = 35;
+  const questionPadding = 20;
 
   let newX = minX;
   let newY = minY;
@@ -186,7 +288,7 @@ function getSafeRandomPosition() {
     break;
   }
 
-  // Fallback if 20 random retries didn't find an unblocked spot
+  // Fallback corner if 20 tries fail
   if (!valid) {
     const yesCenterX = yesRect.left + yesRect.width / 2;
     const yesCenterY = yesRect.top + yesRect.height / 2;
@@ -201,14 +303,13 @@ function getSafeRandomPosition() {
     corners.sort((a, b) => {
       const distA = Math.hypot(a.x - yesCenterX, a.y - yesCenterY);
       const distB = Math.hypot(b.x - yesCenterX, b.y - yesCenterY);
-      return distB - distA; // Descending distance
+      return distB - distA;
     });
 
     newX = corners[0].x;
     newY = corners[0].y;
   }
 
-  // Final strict clamping check
   newX = Math.max(minX, Math.min(newX, maxX));
   newY = Math.max(minY, Math.min(newY, maxY));
 
@@ -216,7 +317,7 @@ function getSafeRandomPosition() {
 }
 
 /**
- * Creates a playful puff/sparkle effect at the spot the No button left from.
+ * Creates a playful puff/sparkle effect at old spot.
  */
 function spawnPuffEffect(x, y) {
   const puff = document.createElement("div");
@@ -229,7 +330,7 @@ function spawnPuffEffect(x, y) {
 }
 
 /**
- * Ensures the No button stays strictly clamped inside viewport upon window resize / orientation change.
+ * Ensures No button stays clamped inside viewport upon resize/orientation change.
  */
 function clampPositionInsideViewport() {
   if (!noBtn.classList.contains("runaway") || noBtn.style.display === "none") return;
@@ -254,27 +355,16 @@ function clampPositionInsideViewport() {
   noBtn.style.left = `${clampedX}px`;
   noBtn.style.top = `${clampedY}px`;
 
-  devCheckBounds();
+  // Also clamp fake decoys
+  fakeDecoys.forEach((fake) => {
+    let fx = parseFloat(fake.style.left) || 100;
+    let fy = parseFloat(fake.style.top) || 100;
+    fake.style.left = `${Math.max(margin, Math.min(fx, maxX))}px`;
+    fake.style.top = `${Math.max(margin, Math.min(fy, maxY))}px`;
+  });
 }
 
-/**
- * Development safety check: logs warning if No button exceeds screen bounds.
- */
-function devCheckBounds() {
-  if (!noBtn.classList.contains("runaway") || noBtn.style.display === "none") return;
-  const rect = noBtn.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-
-  if (rect.left < 0 || rect.top < 0 || rect.right > vw || rect.bottom > vh) {
-    console.warn("[DEV CHECK] No button exceeded viewport bounds!", {
-      rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
-      viewport: { width: vw, height: vh }
-    });
-  }
-}
-
-// Window resize & orientation change handlers
+// Window resize & orientation change listeners
 window.addEventListener("resize", clampPositionInsideViewport);
 window.addEventListener("orientationchange", () => setTimeout(clampPositionInsideViewport, 150));
 if (window.visualViewport) {
@@ -282,80 +372,222 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener("scroll", clampPositionInsideViewport);
 }
 
-function dodgeNoButton() {
-  if (dodgeCount >= 10) return;
+/**
+ * LEVEL 3: Spawn Fake Decoy No Buttons
+ */
+function spawnDecoyButtons(count = 2) {
+  clearDecoyButtons();
+  for (let i = 0; i < count; i++) {
+    const fake = document.createElement("button");
+    fake.className = "fake-no-btn";
+    fake.textContent = "No 💔";
 
-  // Record old position for puff effect
+    const pos = getSafeRandomPosition(fake);
+    fake.style.left = `${pos.x}px`;
+    fake.style.top = `${pos.y}px`;
+
+    // Dodge on hover/touch
+    fake.addEventListener("mousemove", (e) => {
+      const rect = fake.getBoundingClientRect();
+      const dist = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
+      if (dist < 100) {
+        const p = getSafeRandomPosition(fake);
+        fake.style.left = `${p.x}px`;
+        fake.style.top = `${p.y}px`;
+      }
+    });
+
+    fake.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      const p = getSafeRandomPosition(fake);
+      fake.style.left = `${p.x}px`;
+      fake.style.top = `${p.y}px`;
+    });
+
+    // Clicking fake button pops it into heart confetti!
+    fake.addEventListener("click", (e) => {
+      e.preventDefault();
+      spawnPuffEffect(parseFloat(fake.style.left), parseFloat(fake.style.top));
+      dodgeMsg.textContent = "That was a decoy 😜";
+      fake.style.transform = "scale(0)";
+      setTimeout(() => fake.remove(), 200);
+    });
+
+    decoyContainer.appendChild(fake);
+    fakeDecoys.push(fake);
+  }
+}
+
+function clearDecoyButtons() {
+  fakeDecoys.forEach((f) => f.remove());
+  fakeDecoys = [];
+}
+
+/**
+ * LEVEL 4: Mind Games Tricks
+ */
+function applyMindGameTrick() {
+  const trickChoice = Math.floor(Math.random() * 5) + 1;
+
+  switch (trickChoice) {
+    case 1:
+      // Swap positions with Yes button briefly
+      const yesRect = yesBtn.getBoundingClientRect();
+      noBtn.style.left = `${yesRect.left}px`;
+      noBtn.style.top = `${yesRect.top}px`;
+      dodgeMsg.textContent = "Swapped positions! 🔄";
+      break;
+    case 2:
+      // Invisible trick
+      noBtn.style.opacity = "0";
+      dodgeMsg.textContent = "Where did it go?! 🕵️‍♂️";
+      setTimeout(() => {
+        noBtn.style.opacity = "1";
+      }, 1000);
+      break;
+    case 3:
+      // Sneaky label
+      noBtn.textContent = "Yes 💚";
+      dodgeMsg.textContent = "Sneaky! It says Yes now! 😜";
+      setTimeout(() => {
+        noBtn.textContent = "No 💔";
+      }, 1000);
+      break;
+    case 4:
+      // Loading error trick
+      dodgeMsg.textContent = "Loading your No... 99%... Error 404 🤖";
+      break;
+    default:
+      // Fast wobble
+      noBtn.classList.add("shaking");
+      setTimeout(() => noBtn.classList.remove("shaking"), 300);
+      break;
+  }
+}
+
+/**
+ * MAIN DODGE HANDLER - Escalating 6-Level Game
+ */
+function dodgeNoButton() {
+  if (dodgeCount >= 35) return;
+
+  // Spawn puff effect at old spot
   const oldRect = noBtn.getBoundingClientRect();
   if (oldRect.width > 0) {
     spawnPuffEffect(oldRect.left, oldRect.top);
   }
 
   dodgeCount++;
+  updateHUD();
 
-  // CHAOS MODE (After 5th dodge): Shake briefly before jumping & spontaneous jump timer
-  if (dodgeCount > 5) {
-    if (Math.random() < 0.4) {
-      noBtn.classList.add("shaking");
-      setTimeout(() => noBtn.classList.remove("shaking"), 150);
-    }
-    
-    // Clear any previous chaos timer
-    if (chaosTimer) clearTimeout(chaosTimer);
-    
-    // Spontaneous dodge timer: button moves even if cursor doesn't get close!
-    if (dodgeCount < 10) {
-      chaosTimer = setTimeout(() => {
-        if (dodgeCount < 10 && !questionPage.classList.contains("page-hidden")) {
-          dodgeNoButton();
-        }
-      }, Math.random() * 2000 + 2000);
+  // Determine Level Transitions
+  let newLevel = currentLevel;
+  if (dodgeCount >= 35) {
+    newLevel = 6;
+  } else if (dodgeCount >= 29) {
+    newLevel = 5;
+  } else if (dodgeCount >= 21) {
+    newLevel = 4;
+  } else if (dodgeCount >= 13) {
+    newLevel = 3;
+  } else if (dodgeCount >= 6) {
+    newLevel = 2;
+  } else {
+    newLevel = 1;
+  }
+
+  // Level Up Event
+  if (newLevel !== currentLevel) {
+    currentLevel = newLevel;
+    showLevelUpBanner(currentLevel);
+
+    // Level-specific setups
+    if (currentLevel === 2) {
+      proximityThreshold = 160; // Larger distance detection
+      noBtn.style.transition = "left 0.15s ease, top 0.15s ease, transform 0.15s ease !important";
+    } else if (currentLevel === 3) {
+      spawnDecoyButtons(2);
+    } else if (currentLevel === 4) {
+      clearDecoyButtons();
+    } else if (currentLevel === 5) {
+      clearDecoyButtons();
+      energyBarContainer.classList.remove("hidden");
     }
   }
 
+  // Level 2+: Add screen shake on dodge
+  if (currentLevel >= 2) {
+    questionCard.classList.add("card-shake");
+    setTimeout(() => questionCard.classList.remove("card-shake"), 220);
+  }
+
+  // Level 4: Apply mind game trick
+  if (currentLevel === 4 && Math.random() < 0.6) {
+    applyMindGameTrick();
+  }
+
+  // Level 5: Drain Boss Energy Bar
+  if (currentLevel === 5 && energyBarFill) {
+    const energyPercent = Math.max(0, 100 - (dodgeCount - 28) * 15);
+    energyBarFill.style.width = `${energyPercent}%`;
+  }
+
+  // Position & Transform Calculations
   noBtn.classList.add("runaway");
   const pos = getSafeRandomPosition();
   lastNoPos = { x: pos.x, y: pos.y };
 
-  // Calculate random wobble rotation (-15deg to +15deg)
   const randomRot = Math.floor(Math.random() * 31) - 15;
 
-  // Scale calculations: shrink No (min 0.60), grow Yes (max 1.80)
-  const noScale = Math.max(0.60, 1 - dodgeCount * 0.05);
-  const yesScale = Math.min(1.80, 1 + dodgeCount * 0.08);
+  // Scale calculations per level
+  let noScale = 1.0;
+  if (currentLevel === 5) {
+    noScale = 0.50; // Mini mini mini boss button
+  } else {
+    noScale = Math.max(0.60, 1 - dodgeCount * 0.02);
+  }
+
+  const yesScale = Math.min(1.85, 1 + dodgeCount * 0.04);
 
   noBtn.style.left = `${pos.x}px`;
   noBtn.style.top = `${pos.y}px`;
   noBtn.style.transform = `scale(${noScale}) rotate(${randomRot}deg)`;
   yesBtn.style.transform = `scale(${yesScale})`;
 
-  // Update button label
-  const labelIndex = Math.min(dodgeCount, NO_LABELS.length - 1);
-  noBtn.textContent = NO_LABELS[labelIndex];
+  // Update label sequence
+  const labels = [
+    "No 💔", "Are you sure?", "Really?", "Think again 🥺", "Please?", "Last chance!",
+    "Faster! ⚡", "Still trying? 😜", "Decoy mode! 👯", "Mind games! 🧠", "Boss mode! 😈", "Surrender soon! 🏳️"
+  ];
+  const labelIndex = Math.min(dodgeCount - 1, labels.length - 1);
+  noBtn.textContent = labels[labelIndex];
 
-  // Update funny feedback message
-  const msgIndex = (dodgeCount - 1) % DODGE_MESSAGES.length;
-  dodgeMsg.textContent = DODGE_MESSAGES[msgIndex];
+  // Update level funny message
+  dodgeMsg.textContent = getRandomLevelMessage(currentLevel);
   dodgeMsg.style.opacity = "1";
 
-  // Check bounds for dev warning
-  devCheckBounds();
-
-  // After 10th dodge: No button quits!
-  if (dodgeCount >= 10) {
-    if (chaosTimer) clearTimeout(chaosTimer);
+  // LEVEL 6: SURRENDER AT DODGE 35
+  if (dodgeCount >= 35) {
+    clearDecoyButtons();
+    noBtn.textContent = "🏳️ Surrender";
     noBtn.classList.add("quitting");
+    
+    if (energyBarContainer) energyBarContainer.classList.add("hidden");
+
     setTimeout(() => {
       noBtn.style.display = "none";
       dodgeMsg.style.display = "none";
       quitMsg.classList.remove("hidden");
-    }, 400);
+      
+      // Make Yes button pulse & glow with surrender animation!
+      yesBtn.classList.add("yes-surrender-glow");
+    }, 450);
   }
 }
 
-// DESKTOP: Dodge when cursor comes within 100px proximity
+// DESKTOP: Proximity detection (100px on Level 1, 160px on Level 2+)
 document.addEventListener("mousemove", (e) => {
-  if (dodgeCount >= 10 || questionPage.classList.contains("page-hidden")) return;
+  if (dodgeCount >= 35 || questionPage.classList.contains("page-hidden")) return;
   
   const noRect = noBtn.getBoundingClientRect();
   if (noRect.width === 0) return;
@@ -365,13 +597,12 @@ document.addEventListener("mousemove", (e) => {
   
   const distance = Math.hypot(e.clientX - noCenterX, e.clientY - noCenterY);
 
-  // 100px proximity threshold
-  if (distance < 100) {
+  if (distance < proximityThreshold) {
     dodgeNoButton();
   }
 });
 
-// MOBILE & TOUCH: Dodge on touchstart / pointerdown before tap registers
+// MOBILE & TOUCH: Touchstart & Pointerdown before tap registers
 noBtn.addEventListener("touchstart", (e) => {
   e.preventDefault();
   dodgeNoButton();
@@ -389,7 +620,7 @@ noBtn.addEventListener("click", (e) => {
   dodgeNoButton();
 });
 
-// KEYBOARD ACCESSIBILITY: If user tabs to No button or presses Enter/Space, treat as dodge
+// KEYBOARD ACCESSIBILITY: Tabbing or pressing keys on No button triggers dodge
 noBtn.addEventListener("focus", () => {
   dodgeNoButton();
 });

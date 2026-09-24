@@ -293,7 +293,124 @@ body {
   pointer-events: none !important;
 }
 
-/* Dodge & Quit Messages */
+/* Level HUD & Counter */
+.dodge-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 20px;
+  padding: 6px 14px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 117, 143, 0.3);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.level-badge {
+  background: linear-gradient(135deg, #7209b7, #b5179e);
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(114, 9, 183, 0.25);
+}
+
+.dodge-count-text {
+  color: #ff4d6d;
+}
+
+/* Level Up Banner Toast */
+.level-up-toast {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff4d6d, #7209b7);
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 30px;
+  box-shadow: 0 10px 30px rgba(114, 9, 183, 0.4);
+  z-index: 150;
+  animation: bannerPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes bannerPop {
+  0% { opacity: 0; transform: translate(-50%, -20px) scale(0.8); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+/* Boss Level Energy Progress Bar */
+.energy-bar-container {
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 14px;
+  border-radius: 16px;
+  border: 1.5px solid #ff4d6d;
+}
+
+.energy-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #c9184a;
+  margin-bottom: 4px;
+}
+
+.energy-bar {
+  height: 12px;
+  background: #ffccd5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.energy-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4d6d, #ff758f, #ffb5a7);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+/* Decoy Buttons */
+.fake-no-btn {
+  position: fixed !important;
+  background: linear-gradient(135deg, #ff758f, #ff4d6d);
+  color: #ffffff;
+  font-family: var(--font-family);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  z-index: 18;
+  box-shadow: 0 4px 14px rgba(255, 77, 109, 0.3);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Screen / Card Shake */
+.card-shake {
+  animation: cardShake 0.22s ease-in-out !important;
+}
+
+@keyframes cardShake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-8px, 4px) rotate(-1deg); }
+  50% { transform: translate(8px, -4px) rotate(1deg); }
+  75% { transform: translate(-4px, 2px); }
+}
+
+/* Surrender Glowing Yes Button */
+.yes-surrender-glow {
+  animation: yesSurrenderPulse 1.2s infinite ease-in-out !important;
+}
+
+@keyframes yesSurrenderPulse {
+  0% { box-shadow: 0 0 0 0 rgba(46, 196, 182, 0.7); transform: scale(1.3); }
+  70% { box-shadow: 0 0 0 24px rgba(46, 196, 182, 0); transform: scale(1.4); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 196, 182, 0); transform: scale(1.3); }
+}
 .dodge-msg {
   min-height: 26px;
   font-size: 1rem;

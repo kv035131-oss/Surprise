@@ -32,6 +32,23 @@
     
     <!-- PAGE 1: THE QUESTION -->
     <section id="question-page" class="card page-active">
+      <!-- Game Level HUD -->
+      <div id="dodge-hud" class="dodge-hud">
+        <span id="level-badge" class="level-badge">Level 1: Warm-up 🌸</span>
+        <span id="dodge-count-text" class="dodge-count-text">Dodges: 0 😏</span>
+      </div>
+
+      <!-- Level Up Toast Banner -->
+      <div id="level-up-toast" class="level-up-toast hidden" role="alert"></div>
+
+      <!-- Boss Level Energy Bar -->
+      <div id="energy-bar-container" class="energy-bar-container hidden">
+        <div class="energy-label">⚡ No button's energy:</div>
+        <div class="energy-bar">
+          <div id="energy-bar-fill" class="energy-bar-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
       <div class="card-header">
         <h1 id="bday-title" class="title clickable-title" title="Click me for a secret! 😉">
           Happy Birthday, Vamshi Das! 🎂
@@ -56,12 +73,15 @@
         </button>
       </div>
 
+      <!-- Decoy Buttons Container -->
+      <div id="decoy-container"></div>
+
       <!-- Funny Feedback Message after Dodge -->
       <div id="dodge-msg" class="dodge-msg" aria-live="polite"></div>
       
       <!-- Message when No button quits -->
       <div id="quit-msg" class="quit-msg hidden" role="status">
-        Okay, the No button quit. Only Yes is left 😌
+        Okay okay, you win! The No button surrendered 🏳️💖 Only Yes is left 😌
       </div>
     </section>
 
